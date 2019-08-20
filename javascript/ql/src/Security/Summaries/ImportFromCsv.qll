@@ -133,6 +133,77 @@ class AdditionalStepSpec extends ExternalData {
   }
 }
 
+private class AdditionalFlowThroughSummaryFromSpec extends DataFlow::Configuration {
+  AdditionalStepSpec spec;
+
+  DataFlow::Node entry;
+
+  DataFlow::Node exit;
+
+  AdditionalFlowThroughSummaryFromSpec() {
+    this = spec.getConfiguration() and
+    exists(Portal base, int i, ParameterPortal parm, DataFlow::InvokeNode invk |
+      parm = spec.getStartPortal() and
+      base = parm.getBasePortal() and
+      i = parm.getIndex() and
+      base = spec.getEndPortal().(ReturnPortal).getBasePortal() and
+      invk = base.getAnExitNode(_).getAnInvocation()
+    |
+      entry = invk.getArgument(i) and
+      exit = invk
+    )
+  }
+
+  override predicate isAdditionalFlowStep(
+    DataFlow::Node pred, DataFlow::Node succ, DataFlow::FlowLabel predlbl,
+    DataFlow::FlowLabel succlbl
+  ) {
+    pred = entry and
+    succ = exit and
+    predlbl = spec.getStartFlowLabel() and
+    succlbl = spec.getEndFlowLabel()
+  }
+}
+
+private class AdditionalIndirectFlowThroughSummaryFromSpec extends DataFlow::Configuration {
+  AdditionalStepSpec spec;
+
+  DataFlow::Node entry;
+
+  DataFlow::Node exit;
+
+  AdditionalIndirectFlowThroughSummaryFromSpec() {
+    this = spec.getConfiguration() and
+    exists(
+      Portal base, int i, ParameterPortal inparm, int j, ParameterPortal cbparm, int k,
+      ParameterPortal outparm, DataFlow::InvokeNode invk
+    |
+      inparm = spec.getStartPortal() and
+      base = inparm.getBasePortal() and
+      i = inparm.getIndex() and
+      outparm = spec.getEndPortal() and
+      cbparm = outparm.getBasePortal() and
+      base = cbparm.getBasePortal() and
+      j = cbparm.getIndex() and
+      k = outparm.getIndex() and
+      invk = base.getAnExitNode(_).getAnInvocation()
+    |
+      entry = invk.getArgument(i) and
+      exit = invk.getCallback(j).getParameter(k)
+    )
+  }
+
+  override predicate isAdditionalFlowStep(
+    DataFlow::Node pred, DataFlow::Node succ, DataFlow::FlowLabel predlbl,
+    DataFlow::FlowLabel succlbl
+  ) {
+    pred = entry and
+    succ = exit and
+    predlbl = spec.getStartFlowLabel() and
+    succlbl = spec.getEndFlowLabel()
+  }
+}
+
 private class AdditionalFlowStepFromSpec extends DataFlow::Configuration {
   AdditionalStepSpec spec;
 
@@ -142,8 +213,16 @@ private class AdditionalFlowStepFromSpec extends DataFlow::Configuration {
 
   AdditionalFlowStepFromSpec() {
     this = spec.getConfiguration() and
-    entry = spec.getStartPortal().getAnEntryNode(_) and
-    exit = spec.getEndPortal().getAnExitNode(_)
+    exists(Portal inp, Portal outp |
+      inp = spec.getStartPortal() and
+      outp = spec.getEndPortal() and
+      not (
+        inp instanceof ParameterPortal and
+        (outp instanceof ReturnPortal or outp instanceof ParameterPortal)
+      ) and
+      entry = inp.getAnEntryNode(_) and
+      exit = outp.getAnExitNode(_)
+    )
   }
 
   override predicate isAdditionalFlowStep(
