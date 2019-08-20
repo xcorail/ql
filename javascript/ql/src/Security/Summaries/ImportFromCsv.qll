@@ -88,7 +88,7 @@ private class AdditionalSinkFromSpec extends DataFlow::AdditionalSink {
   AdditionalSinkFromSpec() { this = spec.getPortal().getAnEntryNode(_) }
 
   override predicate isSinkFor(DataFlow::Configuration cfg, DataFlow::FlowLabel lbl) {
-    cfg = spec.getConfiguration() and lbl = spec.getFlowLabel()
+    cfg = spec.getConfiguration() and lbl = any(DataFlow::FlowLabel l)
   }
 }
 
