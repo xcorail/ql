@@ -512,9 +512,11 @@ public class AutoBuild {
     Path externs = SEMMLE_DIST.resolve("tools").resolve("data").resolve("externs");
     Files.walkFileTree(externs, visitor);
 
-    Path summaries = externs.resolve("additional-steps.csv");
-    Path dataDir = getPathFromEnvVar(Env.Var.ODASA_SNAPSHOT.name()).resolve("external").resolve("data");
-    Files.copy(summaries, dataDir.resolve("additional-steps.csv"));
+    for (String extraFile : Arrays.asList("additional-sinks.csv", "additional-steps.csv")) {
+      Path summaries = externs.resolve(extraFile);
+      Path dataDir = getPathFromEnvVar(Env.Var.ODASA_SNAPSHOT.name()).resolve("external").resolve("data");
+      Files.copy(summaries, dataDir.resolve(extraFile));
+    }
   }
 
   /** Extract all supported candidate files that pass the filters. */
